@@ -31,7 +31,7 @@ public class TCP_TLS_Connection {
     public List<ConnectionMsg> connectionsMsg;
 
     private final String KEYSTORE_PATH = "chat_keystore.p12";
-    private final char[] KEYSTORE_PASSWORD = "thisisalonglinenotboolean".toCharArray();
+    private final char[] KEYSTORE_PASSWORD = "write your password here".toCharArray();
 
     public TCP_TLS_Connection(String username, String ipAddress, int portNum, TCP_TLS_ConnectionInterface connectionInterface){
         this.username = username;
@@ -69,8 +69,7 @@ public class TCP_TLS_Connection {
                         ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
                         do {
                             Object obj = ois.readObject();
-                            if(obj instanceof ConnectionMsg){
-                                ConnectionMsg connectionMsg = (ConnectionMsg) obj;
+                            if(obj instanceof ConnectionMsg connectionMsg){
                                 switch (connectionMsg.msgType){
                                     case JOINED:
                                         connectionsMsg.add(connectionMsg);
@@ -128,6 +127,7 @@ public class TCP_TLS_Connection {
             serverSocket = (SSLServerSocket) createSSLContext().getServerSocketFactory().createServerSocket(portNum);
             serverSocket.setEnabledProtocols(new String[]{"TLSv1.3"});
             serverSocket.setEnabledCipherSuites(new String[]{"TLS_AES_128_GCM_SHA256"});
+            serverSocket.setNeedClientAuth(true);
         } catch (Exception e) {
             executorService.execute(() -> connectionInterface.failedToConnect(information="Something went wrong. Please retry to join."));
             return;
@@ -157,8 +157,19 @@ public class TCP_TLS_Connection {
                 try {
                     SSLSocket clientSocket = (SSLSocket) serverSocket.accept();
                     executorService.execute(() -> {
-                        handleClientSocket(clientSocket);
+                        try {
+                            clientSocket.setSoTimeout(3000);
+                            clientSocket.startHandshake(); // checks mutual certificates
+                            clientSocket.setSoTimeout(0);
+                            handleClientSocket(clientSocket);
+                        }catch(Exception e){
+                            try {
+                                clientSocket.close();
+                            }catch (IOException _){}
+                        }
                     });
+
+
                 } catch (IOException e) {
                     connectionInterface.failedToSearchNewClient();
                 }
@@ -168,14 +179,16 @@ public class TCP_TLS_Connection {
     private void handleClientSocket(SSLSocket clientSocket){
         String username = "";
         try {
-            connectionsSocket.add(clientSocket);
-            connectionsOutputStream.add(new ObjectOutputStream(clientSocket.getOutputStream()));
-            numOfUser++;
-            connectionsOutputStream.getLast().writeObject(new ConnectionMsg(DataMsgType.ASSIGN_UID , "" + numOfUser));
-            for (ConnectionMsg msg : connectionsMsg)
-                connectionsOutputStream.getLast().writeObject(msg);
-            connectionsOutputStream.getLast().writeObject(new ConnectionMsg(DataMsgType.CLIENT_JOINED, ""));
-            connectionsOutputStream.getLast().flush();
+            synchronized (this) {
+                connectionsOutputStream.add(new ObjectOutputStream(clientSocket.getOutputStream()));
+                connectionsSocket.add(clientSocket);
+                numOfUser++;
+                connectionsOutputStream.getLast().writeObject(new ConnectionMsg(DataMsgType.ASSIGN_UID , "" + numOfUser));
+                for (ConnectionMsg msg : connectionsMsg)
+                    connectionsOutputStream.getLast().writeObject(msg);
+                connectionsOutputStream.getLast().writeObject(new ConnectionMsg(DataMsgType.CLIENT_JOINED, ""));
+                connectionsOutputStream.getLast().flush();
+            }
 
             ObjectInputStream ois = new ObjectInputStream(clientSocket.getInputStream());
             while(isConnected) {
@@ -185,9 +198,11 @@ public class TCP_TLS_Connection {
                         if(connectionMsg.msgType == DataMsgType.CLIENT_JOINED) username = connectionMsg.username;
                         ConnectionMsg msg = new ConnectionMsg(DataMsgType.JOINED, connectionMsg.username);
                         connectionsMsg.add(msg);
-                        for (int i = 0; i < connectionsSocket.size(); i++)
-                            if (connectionsSocket.get(i) != clientSocket)
-                                connectionsOutputStream.get(i).writeObject(msg);
+                        synchronized (this) {
+                            for (int i = 0; i < connectionsSocket.size(); i++)
+                                if (connectionsSocket.get(i) != clientSocket)
+                                    connectionsOutputStream.get(i).writeObject(msg);
+                        }
                         executorService.execute(() -> {
                             connectionInterface.userJoined(msg);
                         });
@@ -195,10 +210,12 @@ public class TCP_TLS_Connection {
                         throw new IOException();
                     }
                 } else {
-                    for (int i = 0; i < connectionsSocket.size(); i++) {
-                        if (connectionsSocket.get(i) != clientSocket) {
-                            connectionsOutputStream.get(i).writeObject(obj);
-                            connectionsOutputStream.get(i).flush();
+                    synchronized (this) {
+                        for (int i = 0; i < connectionsSocket.size(); i++) {
+                            if (connectionsSocket.get(i) != clientSocket) {
+                                connectionsOutputStream.get(i).writeObject(obj);
+                                connectionsOutputStream.get(i).flush();
+                            }
                         }
                     }
                     executorService.execute(() -> {
@@ -210,25 +227,32 @@ public class TCP_TLS_Connection {
             ConnectionMsg leftMsg = new ConnectionMsg(DataMsgType.LEFT, username);
             connectionsMsg.add(leftMsg);
             try {
-                for (int i = connectionsSocket.indexOf(clientSocket) + 1; i < connectionsSocket.size(); i++) {
-                    connectionsOutputStream.get(i).writeObject(new ConnectionMsg(DataMsgType.ASSIGN_UID , "" + (i + 1)));
-                    connectionsOutputStream.get(i).flush();
-                }
-                for (int i = 0; i < connectionsSocket.size(); i++) {
-                    if(connectionsSocket.get(i)!=clientSocket)
-                        try {
-                            connectionsOutputStream.get(i).writeObject(leftMsg);
-                        }catch(Exception _){}
+                synchronized (this) {
+                    for (int i = connectionsSocket.indexOf(clientSocket) + 1; i < connectionsSocket.size(); i++) {
+                        connectionsOutputStream.get(i).writeObject(new ConnectionMsg(DataMsgType.ASSIGN_UID, "" + (i + 1)));
+                        connectionsOutputStream.get(i).flush();
+                    }
+                    for (int i = 0; i < connectionsSocket.size(); i++) {
+                        if (connectionsSocket.get(i) != clientSocket)
+                            try {
+                                connectionsOutputStream.get(i).writeObject(leftMsg);
+                            } catch (Exception _) {
+                            }
+                    }
                 }
             }catch(IOException ioE){
                 connectionInterface.somethingWentWrong(information="Client Gone Abruptly");
             }finally {
-                connectionsOutputStream.remove(connectionsSocket.indexOf(clientSocket));
-                connectionsSocket.remove(clientSocket);
-                numOfUser--;
-                executorService.execute(() -> {
-                    connectionInterface.userLeft(leftMsg);
-                });
+                if(connectionsSocket.contains(clientSocket)) {
+                    synchronized (this) {
+                        connectionsOutputStream.remove(connectionsSocket.indexOf(clientSocket));
+                        connectionsSocket.remove(clientSocket);
+                        numOfUser--;
+                    }
+                    executorService.execute(() -> {
+                        connectionInterface.userLeft(leftMsg);
+                    });
+                }
             }
         }
     }
@@ -238,8 +262,10 @@ public class TCP_TLS_Connection {
             if(isServer){
                 for (ObjectOutputStream oos : connectionsOutputStream) {
                     try {
-                        oos.writeObject(userMsg);
-                        oos.flush();
+                        synchronized (this) {
+                            oos.writeObject(userMsg);
+                            oos.flush();
+                        }
                     }catch(IOException _){}
                 }
                 return 0;

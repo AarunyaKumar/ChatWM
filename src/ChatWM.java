@@ -72,12 +72,20 @@ public class ChatWM implements TCP_TLS_ConnectionInterface {
         updateFrame();
         input = inputScanner.nextLine();
         while(connection.isConnected()){
-            if(checkCommands(input)) {
+            if("_exit".equals(input)) {
+                connection.close();
+                currentPage = Page.CONNECT_BY;
+                connection.information = "You left the chat";
+                updateFrame();
+                break;
+            }else if("_clear".equals(input)){
+                chatMsg.clear();
+            }else{
                 chat = new ChatMsg(username, input);
                 connection.sendData(chat);
                 chatMsg.add(chat);
-                updateFrame();
             }
+            updateFrame();
             input = inputScanner.nextLine();
         }
         if (isRejoin){
@@ -85,24 +93,13 @@ public class ChatWM implements TCP_TLS_ConnectionInterface {
             connection.startConnection();
         }
     }
-    boolean checkCommands(String input){
-        switch (input){
-            case "_exit":
-                connection.close();
-                break;
-            case "_clear":
-                chatMsg.clear();
-                break;
-            default:
-                return true;
-        }
-        return false;
-    }
 
     @Override
     public <UserMsg> void gotData(UserMsg userMsg) {
-        chatMsg.add(userMsg);
-        updateFrame();
+        if(userMsg instanceof ChatMsg || userMsg instanceof DataMsgType) {
+            chatMsg.add(userMsg);
+            updateFrame();
+        }
     }
 
     @Override
