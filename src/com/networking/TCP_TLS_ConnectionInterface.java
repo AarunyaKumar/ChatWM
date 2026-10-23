@@ -3,7 +3,7 @@ package com.networking;
 public interface TCP_TLS_ConnectionInterface {
     <UserMsg> void gotData(UserMsg userMsg);
 
-    default void connectionEstablish(){}
+    default void connectionEstablished(){}
 
     default void userJoined(ConnectionMsg connectionMsg){}
     default void userLeft(ConnectionMsg connectionMsg){}

@@ -144,7 +144,7 @@ public class ChatWM {
         } catch (IOException er) {
             executorService = Executors.newCachedThreadPool();
             try {
-                serverSocket = new ServerSocket(portNum);
+                serverSocket = new ServerSocket(portNum); // new ServerSocket(portNum, 50, InetAddress.getByName(ipAddress));
                 portNum = serverSocket.getLocalPort();
                 ipAddress = InetAddress.getLocalHost().getHostAddress();
                 connections = new ArrayList<>();

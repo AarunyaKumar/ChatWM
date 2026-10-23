@@ -3,15 +3,9 @@ package com.networking;
 import java.io.Serializable;
 import java.time.Instant;
 
-enum DataMsgType{
-    JOINED,
-    LEFT,
-    UID_GIVER
-}
-
 public class ConnectionMsg implements Serializable {
     String username;
-    DataMsgType msgType;
+    public DataMsgType msgType;
     long epochSeconds;
 
     ConnectionMsg(DataMsgType msgType, String username) {
@@ -19,10 +13,10 @@ public class ConnectionMsg implements Serializable {
         this.username = username;
         epochSeconds = Instant.now().getEpochSecond();
     }
-    long getEpochSeconds(){
+    public long getEpochSeconds(){
         return epochSeconds;
     }
-    String getUsername(){
+    public String getUsername(){
         return username;
     }
 }
