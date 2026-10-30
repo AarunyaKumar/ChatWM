@@ -34,6 +34,8 @@
 - ChatWM Desktop: https://youtu.be/_1x76ojISVE
 - ChatWM Insecure Deserialization: https://youtu.be/XklyLN2ohoQ
 
+NOTE: To run this version download the latest jdk version 26 which has jre also, and paste the folder in the same directory of executable files and rename it to "jre".
+
 ### Version 4
 - Made an Android app using the previous made networking package. 
 ##### Demerits
