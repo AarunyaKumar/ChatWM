@@ -19,14 +19,15 @@
 
 ### Version 2
 - Implemented TLS security layer which secures the network. So that no third party can see the data stream.
-- Made a general java package for TCP with TLS network which can be used to in different software for like sending Chat Messages, Game Data, etc. And can be used on cross platforms like Desktop GUI and Android apps.
+- Made a general java package for TCP with TLS network which can be used to in different softwares for like sending Chat Messages, Game Data, etc. And can be used on cross platforms like Desktop GUI and Android apps.
 ##### Demo Video
 - TLS Implementation: https://youtu.be/ltbfwmhgybM
 
 ### Version 3
 - Made a Desktop version with previous networking package.
 - You can send simple messages, alert messages and files (of size below 200MB) over the network.
-- As data are transmitted via serialization, Insecure De-serializable vulnerability exists. If somehow hacker gets keystore file along with password, they can send malicious code and run them over the connected devices. This can be tested by HackChatWM, you can send virus, which is just simple two like of code to give warning and open calculator app, using the same keystore file and password.
+- You can create your own private keystore file for your organisation.
+- As data are transmitted via serialization, Insecure De-serializable vulnerability exists. If somehow hacker gets keystore file along with password, they can send malicious code and run them over the connected devices. This can be tested by HackChatWM, you can send virus, which is just simple two line of code to give warning and open calculator app, using the same keystore file and password.
 - Improved the package to avoid any third party object code to execute and fixed the Insecure De-serialization vulnerability.
 ##### Demerits
 - Files are loaded in the memory, that's why I had to limit to 200MB. Files should be sended part by part from storage to network. (For this, either there should be a centralized server, or there must be a mutual acceptance between devices to simultaneously send and receive data.)
@@ -37,7 +38,7 @@
 NOTE: To run this version download the latest jdk version 26 which has jre also, and paste the folder in the same directory of executable files and rename it to "jre".
 
 ### Version 4
-- Made an Android app using the previous made networking package. 
+- Made an Android App using the previously made networking package. 
 ##### Demerits
 - Currently, few features still needs to be fixed, like when android app becomes server, it does not allow clients to connect.
 - File names, should be sended over network correctly.
