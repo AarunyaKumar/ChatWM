@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Backgrounds & Surfaces -->
+    <color name="bg_screen">#121212</color>
+    <color name="bg_top_bar">#1E1E1E</color>
+    <color name="bg_bottom_bar">#1E1E1E</color>
+    <color name="bg_input_box">#2C2C2C</color>
+    <color name="border_input_box">#4B5563</color>
+    <color name="divider_color">#2E2E2E</color>
+
+    <!-- Text & Icons -->
+    <color name="text_primary">#F9FAFB</color>
+    <color name="text_secondary">#9CA3AF</color>
+    <color name="text_hint">#6B7280</color>
+    <color name="icon_tint">#E5E7EB</color>
+
+    <!-- Primary & Send Button -->
+    <color name="primary_accent">#3B82F6</color>
+    <color name="text_on_accent">#FFFFFF</color>
+
+    <!-- Top Bar Badges[cite: 1] -->
+    <color name="badge_uid_bg">#2C2C2C</color>
+    <color name="badge_uid_stroke">#4B5563</color>
+    <color name="badge_uid_text">#E5E7EB</color>
+
+    <color name="badge_role_bg">#1E3A5F</color>
+    <color name="badge_role_stroke">#2563EB</color>
+    <color name="badge_role_text">#93C5FD</color>
+
+    <color name="badge_online_bg">#143321</color>
+    <color name="badge_online_stroke">#16A34A</color>
+    <color name="badge_online_text">#86EFAC</color>
+
+    <!-- Chat Message Cards & Events -->
+    <color name="msg_normal_bg">#1F2937</color>
+    <color name="msg_normal_border">#374151</color>
+
+    <color name="msg_alert_bg">#3B1818</color>
+    <color name="msg_alert_border">#F87171</color>
+    <color name="msg_alert_text">#FCA5A5</color>
+
+    <color name="msg_joined_text">#66BB6A</color>
+    <color name="msg_joined_user">#A5D6A7</color>
+    <color name="msg_left_text">#EF5350</color>
+    <color name="msg_left_user">#FFCDD2</color>
+
+    <!-- Alert Toggle Button Active State[cite: 2] -->
+    <color name="btn_alert_active_bg">#451A1A</color>
+    <color name="btn_alert_active_text">#FCA5A5</color>
+</resources>
